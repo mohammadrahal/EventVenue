@@ -6,12 +6,14 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const userRoute = require('./routes/userRoute')
 const eventRouter = require('./routes/eventRoute')
+const venueRouter = require('./routes/venueRoute')
 const app = express()
 app.use(bodyParser.json());
 app.use(cors())
 
 app.use('/user', userRoute)
 app.use('/event', eventRouter)
+app.use('/venue', venueRouter)
 
 app.listen(PORT, () => {
     console.log(`Server is running on  http://localhost:${PORT}`);
