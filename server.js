@@ -4,12 +4,15 @@ const PORT = process.env.PORT;
 
 const cors = require('cors');
 const bodyParser = require('body-parser');
-
+const userRoute = require('./routes/userRoute')
+const eventRouter = require('./routes/eventRoute')
 const app = express()
-app.use(express)
 app.use(bodyParser.json());
 app.use(cors())
 
+app.use('/user', userRoute)
+app.use('/event', eventRouter)
+
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on  http://localhost:${PORT}`);
   });

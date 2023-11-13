@@ -17,7 +17,7 @@ connection.getConnection((err) => {
     console.log(err);
     return;
   }
-  console.log('connected successfully');
+  console.log('WOHOHOHOHOHOHOH connected successfully');
 });
 
 module.exports = connection.promise();
