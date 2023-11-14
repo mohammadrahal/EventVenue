@@ -1,17 +1,17 @@
 const db = require("../config/db");
 
 // get evnet
-
-const getEvnet = async (req, res) => {
+const getEvnet = async (_, res) => {
+  const event = `SELECT  id, title, date, ticket_price, description, venuesid  FROM events`;
   try {
-    const [event] = await db.query("SELECT * from events");
-    res.status(200).json({
+    const [response] = await db.query(event);
+    return res.status(200).json({
       success: true,
       message: "Event recived",
-      data: event,
+      data: response,
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: "Error while getting events",
       erro: error.message,
@@ -20,15 +20,16 @@ const getEvnet = async (req, res) => {
 };
 // by id
 const getEvnetById = async (req, res) => {
+  const { id } = req.params;
   try {
-    const [event] = await db.query("SELECT * from events WHERE id = ?");
-    res.status(200).json({
+    const response = await InfoById(id);
+    return res.status(200).json({
       success: true,
-      message: "Event recived",
-      data: event,
+      message: "Event recived by id",
+      data: response[0],
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: "Error while getting events",
       erro: error.message,
@@ -37,21 +38,30 @@ const getEvnetById = async (req, res) => {
 };
 
 // add event
-const addEvent = async (res, req) => {
-  const { title, date, price, descr } = req.body;
+const addEvent = async (req, res) => {
+  const { title, date, ticket_price, description, venuesid } = req.body;
+  const event =
+    "INSERT INTO events (title, date, ticket_price, description, venuesid) VALUES (?,?,?,?,?);";
+
   try {
-    const [event] = await db.query(
-      "INSERT INTO events (`title`, `even_date`, `ticket_price`, `descr`, `venuesid`) VALUES (?,?,?,?,?);"
-    )[(title, date, price, descr)];
-    res.status(200).json({
+    const [response] = await db.query(event, [
+      title,
+      date,
+      ticket_price,
+      description,
+      venuesid,
+    ]);
+
+    const [data] = await InfoById(response.insertId);
+    return res.status(200).json({
       success: true,
       message: "Event added",
-      data: event,
+      data: data,
     });
   } catch (error) {
-    res.status(400).json({
-      success: true,
-      message: "Data deleted successfully",
+    return res.status(400).json({
+      success: false,
+      message: "Error while adding event",
       error: error.message,
     });
   }
@@ -59,29 +69,30 @@ const addEvent = async (res, req) => {
 
 // update
 const updateEvent = async (req, res) => {
-  const eventId = req.params.id;
-  const { title, date, price, descr } = req.body;
+  const { id } = req.params;
+  const { title, date, ticket_price, description } = req.body;
 
+  const event = `UPADTE events SET title = ?, date = ?, ticket_price = ?, discreption = ? `;
   try {
-    const [existingEvent] = await db.query(
-      "SELECT * FROM events WHERE id = ?",
-      [eventId]
-    );
+    const [response] = await db.query(event, [
+      title,
+      date,
+      ticket_price,
+      description,
+      id,
+    ]);
 
-    if (!existingEvent || existingEvent.length === 0) {
+    if (!response.affectedRows) {
       return res.status(404).json({
         success: false,
         message: "Event not found",
       });
     }
-    const [updatedEvent] = await db.query(
-      "UPDATE events SET title = ?, even_date = ?, ticket_price = ?, descr = ? WHERE id = ?",
-      [title, date, price, descr, eventId]
-    );
+    const [data] = await InfoById(id);
     res.status(200).json({
       success: true,
       message: "Event updated successfully",
-      data: updatedEvent,
+      data: data,
     });
   } catch (error) {
     res.status(400).json({
@@ -94,14 +105,18 @@ const updateEvent = async (req, res) => {
 
 // delete
 const deleteEvent = async (req, res) => {
+  const {id}= req.params;
+  const event = `DELETE FROM events WHERE id = ?;`;
   try {
-    const [event] = await db.query(`DELETE FROM events WHERE id = ?`, [
-      req.params.id,
-    ]);
-    res.status(200).json({
+    const [response] = await db.query(event, [id]);
+    if (!response.affectedRows)
+    return res.status(400).json({
+      success: false,
+      message: `event not found`,
+    });
+    return res.status(200).json({
       success: true,
       message: "Data deleted successfully",
-      data: event,
     });
   } catch (error) {
     res.status(400).json({
@@ -112,6 +127,18 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+const InfoById = async (id) => {
+  const query = `SELECT  id, title, date, ticket_price, description, venuesid  FROM events where id = ?`;
+  // or dont work becouse it not giving the right data
+  // const query = `SELECT * FROM events  where id = ?`
+  
+  try {
+    const response = await db.query(query, [id]);
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 module.exports = {
   getEvnet,
   getEvnetById,

@@ -9,10 +9,10 @@ const{
     deleteEvent
 }= require('../controllers/eventController')
 
-router.get('/getevent', getEvnet)
-router.get('/geteventbyid/:id', getEvnetById)
-router.post('/addevent', addEvent)
-router.put('/updateEvent', updateEvent)
-router.delete('/deleteevent', deleteEvent)
+router.get('/getall', getEvnet)
+router.get('/getbyid/:id', getEvnetById)
+router.post('/add', addEvent)
+router.put('/update/:id', updateEvent)
+router.delete('/delete/:id', deleteEvent)
 
 module.exports = router

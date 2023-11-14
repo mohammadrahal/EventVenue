@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-
 const {
     getAllVenues,
     getVenueByID,
@@ -10,12 +9,14 @@ const {
     deleteVenue
 }= require('../controllers/venueController')
 
+const storage = multer.memoryStorage(); 
+const upload = multer({ dest: 'uploads/'});
 
-router.get('/getallvenus', getAllVenues)
-router.get('/getbyid', getVenueByID)
-router.post('/addvenue', addVenue)
-router.put('/updatevenue', updateVenue)
-router.delete('/deletevenue', deleteVenue)
+router.get('/getall', getAllVenues)
+router.get('/getbyid/:id', getVenueByID)
+router.post('/add', upload.single('image'), addVenue)
+router.put('/updat/:id', updateVenue)
+router.delete('/delete/:id', deleteVenue)
 
 
 module.exports= router;
