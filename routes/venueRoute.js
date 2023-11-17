@@ -9,13 +9,12 @@ const {
     deleteVenue
 }= require('../controllers/venueController')
 
-const storage = multer.memoryStorage(); 
-const upload = multer({ dest: 'uploads/'});
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/getall', getAllVenues)
 router.get('/getbyid/:id', getVenueByID)
-router.post('/add', upload.single('image'), addVenue)
-router.put('/updat/:id', updateVenue)
+router.post('/add', upload.single('image'), addVenue);
+router.put('/update/:id', upload.single('image'), updateVenue);
 router.delete('/delete/:id', deleteVenue)
 
 

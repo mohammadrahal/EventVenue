@@ -1,14 +1,5 @@
 const db = require('../config/db');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-
-cloudinary.config({
-  cloudinary_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env,
-});
-
-
+const { imageUploader } = require('../extra/imageUploader');
 
 const getAllVenues = async (_, res) => {
   const venues=  `SELECT id, name, description, capacity, image, address from venues `;
@@ -51,84 +42,67 @@ const getVenueByID= async (req, res) => {
 // add venue with image
 const addVenue = async (req, res) => {
   const { name, description, capacity, address } = req.body;
-  const venue = 'INSERT INTO venues (name, description, capacity, image, address) VALUES (?,?,?,?,?);';
-
+  const query = `INSERT INTO venues (name, description, capacity, image, address) VALUES (?, ?, ?, ?, ?);`;
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Image not provided',
-      });
-    }
-
-    const imageBuffer = req.file.buffer.toString('base64');
-    const imageResult = await cloudinary.uploader.upload(`data:image/png;base64,${imageBuffer}`, {
-      folder: 'venues',
-    });
-
-    const [response] = await db.query(venue, [
+    const imageURL = await imageUploader(req.file);
+    const [response] = await db.query(query, [
       name,
       description,
       capacity,
-      imageResult.secure_url, // Move this line after imageResult is initialized
-      address
+      imageURL,
+      address,
     ]);
-
-    console.log(response);
-    res.status(201).json({
+    const [data] = await InfoById(response.insertId);
+    res.status(200).json({
       success: true,
-      message: 'Data added successfully',
+      message: `Venue added successfully`,
+      data: data,
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
-      message: 'Unable to add new data',
+      message: `Unable to add venue`,
       error: error.message,
     });
   }
 };
 
-
-  
-  const updateVenue = async (req, res) => {
-    const { name, description, capacity, address } = req.body;
-    const VenueId = req.params.id;
-  
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'Image not provided',
-        });
-      }
-  
-      const imageBuffer = req.file.buffer.toString('base64');
-      const imageResult = await cloudinary.uploader.upload(`data:image/png;base64,${imageBuffer}`, {
-        folder: 'venues', 
-      });
-  
-      
-      const venues = await db.query(
-        `UPDATE venues SET name = ?, descr= ?, capacity = ?, image = ?, address = ? WHERE id = ?`,
-        [name, description, capacity, imageResult.secure_url, address, VenueId]
-      );
-  
-      console.log(venues);
-      res.status(200).json({
-        success: true,
-        message: 'Data updated successfully',
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(400).json({
-        success: false,
-        message: 'Unable to update data',
-        error: error.message, 
-      });
+// update
+const updateVenue = async (req, res) => {
+  const { ID } = req.params;
+  const { name, description, capacity, image, address } = req.body;
+  const query = `UPDATE venues SET name = ?, description = ?, capacity = ?, image = ?, address = ? WHERE ID = ?;`;
+  let imageURL = '';
+  try {
+    if (req.file) {
+      imageURL = await imageUploader(req.file);
+    } else {
+      imageURL = image;
     }
-  };
-  
+    console.log(imageURL);
+    const [response] = await db.query(query, [
+      name,
+      description,
+      capacity,
+      imageURL,
+      address,
+      ID,
+    ]);
+    const data = await getVenueByID(ID);
+    res.status(200).json({
+      success: true,
+      message: `Venue with ID = ${ID} updated successfully`,
+      data: data[0],
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: `Unable to update venue with id = ${ID}`,
+      error: error.message,
+    });
+  }
+};
+
 
 
   // delete

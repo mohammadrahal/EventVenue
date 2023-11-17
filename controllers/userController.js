@@ -1,5 +1,8 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+// token
+const {generateToken} = require('../extra/token')
+
 // check event to see the onther way to get users
 const getAllUsers = async (_, res) => {
   try {
@@ -48,7 +51,7 @@ const register = async (req, res) => {
   try {
     const [response] = await db.query(query, [fullname, email, hashedPassword]);
     const [data] = await getInfoById(response.insertId);
-
+    generateToken(1, 'admin');
     res.status(200).json({
       success: true,
       message: `User registered successfully`,

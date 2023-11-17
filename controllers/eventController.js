@@ -128,9 +128,9 @@ const deleteEvent = async (req, res) => {
 };
 
 const InfoById = async (id) => {
-  const query = `SELECT  id, title, date, ticket_price, description, venuesid  FROM events where id = ?`;
-  // or dont work becouse it not giving the right data
-  // const query = `SELECT * FROM events  where id = ?`
+  // const query = `SELECT  id, title, date, ticket_price, description, venuesid  FROM events where id = ?`;
+  // or 
+  const query = `SELECT * FROM events  where id = ?`
   
   try {
     const response = await db.query(query, [id]);
