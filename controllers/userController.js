@@ -1,7 +1,7 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 // token
-const {generateToken} = require('../extra/token')
+const {generate} = require('../extra/token')
 
 // check event to see the onther way to get users
 const getAllUsers = async (_, res) => {
@@ -31,7 +31,7 @@ const getUserById = async (req, res) => {
     const response = await getInfoById(id);
     return res.status(200).json({
       success: true,
-      message: `User of id = ${id} data retrieved successfully `,
+      message: `User of  data retrieved successfully `,
       data: response[0], //to get password
     });
   } catch (error) {
@@ -51,7 +51,7 @@ const register = async (req, res) => {
   try {
     const [response] = await db.query(query, [fullname, email, hashedPassword]);
     const [data] = await getInfoById(response.insertId);
-    generateToken(1, 'admin');
+    // generate(1, 'admin');
     res.status(200).json({
       success: true,
       message: `User registered successfully`,
@@ -61,6 +61,42 @@ const register = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: `Unable to register a new user`,
+      error: error.message,
+    });
+  }
+};
+
+// login
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const query = `SELECT * FROM users WHERE email = ?`;
+  try {
+    const [response] = await db.query(query, [email]);
+    if (!response.length) {
+      return res.status(404).json({
+        success: false,
+        message: `User with email not found`,
+      });
+    }
+    const hashedPassword = response[0].password;
+    const passwordMatch = await bcrypt.compare(password, hashedPassword);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Wrong password",
+        userId: response[0].User_id,
+      });
+    }
+    const token = generate(response[0].id, response[0].role);
+    return res.status(200).json({
+      success: true,
+      message: `User  logged in successfully`,
+      token:token,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Unable to login for user with email ${email}`,
       error: error.message,
     });
   }
@@ -85,6 +121,7 @@ const updateUser = async (req, res) => {
       message: `User updated successfully`,
       data: data[0],
     });
+    
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -94,39 +131,6 @@ const updateUser = async (req, res) => {
   }
 };
 
-// login
-const login = async (req, res) => {
-  const { email, password } = req.body;
-  const query = `SELECT * FROM users WHERE email = ?`;
-  try {
-    const [response] = await db.query(query, [email]);
-    if (!response.length) {
-      return res.status(404).json({
-        success: false,
-        message: `User with email ${email} not found`,
-      });
-    }
-    const hashedPassword = response[0].password;
-    const passwordMatch = await bcrypt.compare(password, hashedPassword);
-    if (!passwordMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Wrong password",
-        userId: response[0].User_id,
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      message: `User with email logged in successfully`,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: `Unable to login for user with email ${email}`,
-      error: error.message,
-    });
-  }
-};
 
 // switch to admin
 const switchAdmin = async (req, res) => {
@@ -181,10 +185,9 @@ const getInfoById = async (id) => {
   const query = `SELECT id, fullname, email, role FROM users WHERE id = ?`;
   try {
     const response = await db.query(query, [id]);
-    console.log(response);
+    // console.log(response);
     return response;
   } catch (error) {
-    console.log(response);
     return error;
   }
 };
